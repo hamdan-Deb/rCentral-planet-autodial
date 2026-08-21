@@ -1,6 +1,6 @@
 # 📞 RingCentral & CRM Auto-Dialer Automation
 
-An open-source, lightweight automation toolkit for **RingCentral / Ascenturi Softphone** and **CRM portals (Planet ALTIG)** using **AutoHotkey v2** and **JavaScript**.
+An open-source, lightweight automation toolkit for **RingCentral Softphone** and **CRM portals (Planet)** using **AutoHotkey v2** and **JavaScript**.
 
 > ⚖️ **License:** MIT License (Open Source) — No sensitive user data, PII, credentials, or proprietary API keys are included.
 
@@ -16,7 +16,7 @@ An open-source, lightweight automation toolkit for **RingCentral / Ascenturi Sof
 
 ## Section 1: Standalone RingCentral Auto-Dialer
 
-A standalone AutoHotkey v2 script designed to rapidly dial through a list of phone numbers on RingCentral / Ascenturi softphone without requiring CRM synchronization.
+A standalone AutoHotkey v2 script designed to rapidly dial through a list of phone numbers on RingCentral softphone without requiring CRM synchronization.
 
 ### 🌟 Key Features
 - **Alternating & Shuffled Dialing:** Prevents repetitive patterns by shuffling number order.
@@ -67,8 +67,8 @@ F8::
                 return
             }
 
-            if WinExist("Ascenturi")
-                WinActivate("Ascenturi")
+            if WinExist("Acenturi")
+                WinActivate("Acenturi")
             else if WinExist("RingCentral")
                 WinActivate("RingCentral")
 
