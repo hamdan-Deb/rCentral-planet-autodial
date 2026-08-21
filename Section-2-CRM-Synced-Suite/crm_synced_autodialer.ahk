@@ -1,0 +1,150 @@
+#Requires AutoHotkey v2.0
+#SingleInstance Force
+
+CoordMode("Mouse", "Window")
+global IsRunning := false
+
+; Hotkey F8: Start Auto-Dialer and Screen Pop
+F8::
+{
+    global IsRunning
+    IsRunning := true
+    
+    PhoneNumbers := ["5042182934", "8018200774", "5805176632"]
+    LeadMap := Map()
+
+    ; 1. Load lead_map.json (Array or Object Format)
+    if FileExist("lead_map.json") {
+        try {
+            jsonText := FileRead("lead_map.json")
+            Pos := 1
+            While Pos := RegExMatch(jsonText, "i)`"phone`":\s*`"(\d{10})`"[\s\S]*?`"url`":\s*`"([^`"]+)`"", &m, Pos) {
+                LeadMap[m[1]] := m[2]
+                Pos += m.Len
+            }
+        }
+    }
+
+    ; 2. Load numbers.txt
+    if FileExist("numbers.txt") {
+        try {
+            loaded := []
+            fileText := FileRead("numbers.txt")
+            Loop Parse, fileText, "`n", "`r" {
+                clean := RegExReplace(A_LoopField, "\D", "")
+                if (StrLen(clean) >= 10)
+                    loaded.Push(clean)
+            }
+            if (loaded.Length > 0)
+                PhoneNumbers := loaded
+        }
+    }
+
+    ToolTip("Auto-Dialer and Screen Pop Started.")
+    Sleep(2000)
+    ToolTip()
+
+    while (IsRunning)
+    {
+        for index, number in PhoneNumbers
+        {
+            if (!IsRunning) {
+                ToolTip()
+                return
+            }
+
+            ; Focus RingCentral or Ascenturi FIRST and dial
+            if WinExist("Ascenturi")
+                WinActivate("Ascenturi")
+            else if WinExist("RingCentral")
+                WinActivate("RingCentral")
+            else if WinExist("ahk_exe RingCentral.exe")
+                WinActivate("ahk_exe RingCentral.exe")
+
+            Sleep(400)
+            WinGetPos(&X, &Y, &W, &H, "A")
+
+            inputBoxX := Integer(W * 0.50)
+            inputBoxY := Integer(H * 0.38)
+            redHangupX := Integer(W * 0.60)
+            redHangupY := Integer(H * 0.90)
+
+            ; Pre-Call Hangup Safety
+            Click(redHangupX, redHangupY)
+            Sleep(200)
+            Send("^+h")
+            Sleep(300)
+
+            ; Focus Input Box and Paste Phone Number
+            Click(inputBoxX, inputBoxY)
+            Sleep(300)
+            A_Clipboard := number
+            Sleep(100)
+            Send("^a{BS}^v")
+            Sleep(400)
+
+            ; Trigger Call
+            Send("{Enter}")
+            Sleep(300)
+            Send("{Enter}")
+            Sleep(300)
+
+            ; Open Customer Profile in Chrome AFTER Dialing
+            if LeadMap.Has(number) {
+                leadUrl := LeadMap[number]
+                Run(leadUrl)
+            }
+
+            ; Ring Countdown (Random 10 to 30 seconds)
+            RingTimeSeconds := Random(10, 30)
+            Loop RingTimeSeconds
+            {
+                if (!IsRunning) {
+                    ToolTip()
+                    return
+                }
+                remaining := RingTimeSeconds - A_Index + 1
+                ToolTip("Calling (" . index . "/" . PhoneNumbers.Length . "): " . number . "`nRinging: " . RingTimeSeconds . "s (Cancel in " . remaining . "s)")
+                Sleep(1000)
+            }
+
+            ; Hang Up Call
+            ToolTip("Hanging up...")
+            if WinExist("Acenturi")
+                WinActivate("Acenturi")
+            else if WinExist("RingCentral")
+                WinActivate("RingCentral")
+
+            Sleep(300)
+            Click(redHangupX, redHangupY)
+            Sleep(300)
+            Send("^+h")
+            Sleep(1000)
+            ToolTip()
+
+            Sleep(2000)
+        }
+    }
+}
+
+; Hotkey F9: Pause or Resume
+F9::
+{
+    global IsRunning
+    IsRunning := !IsRunning
+    if (IsRunning)
+        ToolTip("Auto-Dialer RESUMED")
+    else
+        ToolTip("Auto-Dialer PAUSED")
+    SetTimer(() => ToolTip(), -2000)
+}
+
+; Hotkey ESC: Emergency Stop
+Esc::
+{
+    global IsRunning
+    IsRunning := false
+    ToolTip("Auto-Dialer STOPPED")
+    SetTimer(() => ToolTip(), -2000)
+    ExitApp()
+}
